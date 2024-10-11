@@ -1,5 +1,7 @@
+
 plugins {
     kotlin("jvm") version "2.0.20"
+    application
 }
 
 group = "wordlike"
@@ -20,6 +22,20 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks {
+    distZip {
+        archiveFileName.set("wordlike.zip")
+    }
+    distTar {
+        archiveFileName.set("wordlike.tar")
+    }
+}
+
 kotlin {
     jvmToolchain(21)
+}
+
+application {
+    mainClass.set("wordlike.MainKt")
 }
