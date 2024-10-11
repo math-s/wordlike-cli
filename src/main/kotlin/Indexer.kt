@@ -74,17 +74,24 @@ object Indexer {
         connection.close()
     }
 
+    fun insertWord(word: String): Pair<Int, String> {
+        val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
+        connection.use { conn ->
+            val preparedStatement = conn.prepareStatement("INSERT OR IGNORE INTO words (word) VALUES (?)")
+            preparedStatement.setString(1, word)
+            preparedStatement.execute()
+            val wordId = conn.createStatement().executeQuery("SELECT last_insert_rowid()").getInt(1)
+            populateTrigrams(word, conn.createStatement().executeQuery("SELECT last_insert_rowid()").getInt(1))
+            return Pair(wordId, word)
+        }
+    }
+
     private fun loadWords(filePath: String) {
         logger.info { "loading words..." }
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
-        connection.use { conn ->
-            File(filePath).forEachLine { line ->
-                line.toCharArray().forEach { if (!it.isLetter()) return@forEachLine }
-                val preparedStatement = conn.prepareStatement("INSERT OR IGNORE INTO words (word) VALUES (?)")
-                preparedStatement.setString(1, line)
-                preparedStatement.execute()
-                populateTrigrams(line, conn.createStatement().executeQuery("SELECT last_insert_rowid()").getInt(1))
-            }
+        File(filePath).forEachLine { line ->
+            line.toCharArray().forEach { if (!it.isLetter()) return@forEachLine }
+            insertWord(line)
         }
         connection.close()
         logger.info { "words were loaded..." }
