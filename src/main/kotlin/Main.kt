@@ -1,16 +1,33 @@
 package wordlike
 
-// TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-fun main() {
-    val name = "Kotlin"
-    // TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-    // to see how IntelliJ IDEA suggests fixing it.
-    println("Hello, " + name + "!")
+import kotlinx.cli.ArgParser
+import kotlinx.cli.ArgType
+import kotlinx.cli.ExperimentalCli
+import kotlinx.cli.Subcommand
+import mu.KotlinLogging
 
-    for (i in 1..5) {
-        // TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-        // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-        println("i = $i")
-    }
+val logger = KotlinLogging.logger {}
+
+@OptIn(ExperimentalCli::class)
+fun main(args: Array<String>) {
+    val parser = ArgParser("similarto")
+
+    val similarto =
+        object : Subcommand("similarto", "Find similar words.") {
+            val word by argument(ArgType.String, description = "Target word to find similar words.")
+
+            override fun execute() {
+                Resolver.findSimilar(word).forEach { logger.info { it } }
+            }
+        }
+
+    val index =
+        object : Subcommand("index", "Index new words.") {
+            val fileName by argument(ArgType.String, description = "Path to file to be loaded.")
+
+            override fun execute() = Indexer.execute(fileName)
+        }
+
+    parser.subcommands(similarto, index)
+    parser.parse(args)
 }
