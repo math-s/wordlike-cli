@@ -74,7 +74,16 @@ object Indexer {
         connection.close()
     }
 
+    private fun getWordOrNull(word: String): Pair<Int, String>? {
+        val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
+        connection.use { conn ->
+            val resultSet = conn.createStatement().executeQuery("SELECT id, word FROM words WHERE word = '$word'")
+            return if (resultSet.next()) Pair(resultSet.getInt(1), resultSet.getString(2)) else null
+        }
+    }
+
     fun insertWord(word: String): Pair<Int, String> {
+        getWordOrNull(word)?.let { return it }
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
         connection.use { conn ->
             val preparedStatement = conn.prepareStatement("INSERT OR IGNORE INTO words (word) VALUES (?)")
