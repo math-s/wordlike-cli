@@ -8,17 +8,23 @@ import java.sql.DriverManager
 object Indexer {
     private val logger = KotlinLogging.logger {}
 
-    fun getTrigrams(word: String): List<String> =
-        if (word.length < 3) {
-            listOf(word)
+    private fun getNGram(
+        word: String,
+        n: Int,
+    ): List<Pair<Int, String>> =
+        if (word.length < n) {
+            listOf(Pair(n, word.lowercase()))
         } else {
-            word.windowed(3, 1)
+            word.windowed(n, 1).map { Pair(n, it) }
         }
+
+    fun getSubsetsOfWord(word: String): List<Pair<Int, String>> = (1..4).flatMap { getNGram(word, it) }
 
     private fun createTables() {
         logger.info { "creating tables." }
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
         connection.use { conn ->
+            registerLevenshteinFunction(conn)
             conn.createStatement().use {
                 it.execute("DROP TABLE IF EXISTS words")
                 it.execute("CREATE TABLE IF NOT EXISTS words (word TEXT PRIMARY KEY)")
@@ -36,7 +42,7 @@ object Indexer {
         }
     }
 
-    fun insertWord(word: String): String {
+    private fun insertWord(word: String): String {
         getWordOrNull(word)?.let { return it }
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
         connection.use { conn ->
@@ -52,7 +58,7 @@ object Indexer {
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
         File(filePath).forEachLine { line ->
             line.toCharArray().forEach { if (!it.isLetter()) return@forEachLine }
-            insertWord(line)
+            insertWord(line.lowercase())
         }
         connection.close()
         logger.info { "words were loaded..." }

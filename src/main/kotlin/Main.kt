@@ -5,6 +5,7 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import mu.KotlinLogging
+import java.math.RoundingMode
 
 val logger = KotlinLogging.logger {}
 
@@ -19,12 +20,11 @@ fun main(args: Array<String>) {
             override fun execute() {
                 val result =
                     buildString {
-                        phrase
-                            .split(
-                                " ",
-                            ).forEach { word ->
-                                append(JaccardResolver.findSimilar(word).first().second + " ")
+                        phrase.split(" ").forEach { word ->
+                            JaccardResolver.findSimilar(word).forEach {
+                                append("${it.first.setScale(2, RoundingMode.UP)} ${it.second} \n")
                             }
+                        }
                     }
                 logger.info { result }
             }

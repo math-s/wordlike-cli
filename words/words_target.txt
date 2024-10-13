@@ -1,4 +1,8 @@
 a
+an
+are
+am
+is
 abandon
 ability
 able
@@ -102,6 +106,9 @@ almost
 alone
 along
 already
+this
+the
+then
 also
 alter
 alternative
