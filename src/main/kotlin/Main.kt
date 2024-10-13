@@ -5,7 +5,6 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.ExperimentalCli
 import kotlinx.cli.Subcommand
 import mu.KotlinLogging
-import java.math.RoundingMode
 
 val logger = KotlinLogging.logger {}
 
@@ -15,10 +14,19 @@ fun main(args: Array<String>) {
 
     val similarto =
         object : Subcommand("similarto", "Find similar words.") {
-            val word by argument(ArgType.String, description = "Target word to find similar words.")
+            val phrase by argument(ArgType.String, description = "Target word to find similar words.")
 
             override fun execute() {
-                JaccardResolver.findSimilar(word).forEach { logger.info { "${it.first.setScale(2, RoundingMode.UP)} ${it.second}" } }
+                val result =
+                    buildString {
+                        phrase
+                            .split(
+                                " ",
+                            ).forEach { word ->
+                                append(JaccardResolver.findSimilar(word).first().second + " ")
+                            }
+                    }
+                logger.info { result }
             }
         }
 
