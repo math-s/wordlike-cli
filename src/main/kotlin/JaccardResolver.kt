@@ -5,17 +5,17 @@ import java.math.BigDecimal
 import java.sql.Connection
 import java.sql.DriverManager
 
-object JaccardResolver {
+object JaccardResolver : Resolver {
     private val logger = KotlinLogging.logger {}
 
-    private fun countSubstringsInWords(target: String): Array<Pair<BigDecimal, String>> {
+    private fun countSubstringsInWords(target: String): List<Pair<BigDecimal, String>> {
         val targetNgram = Indexer.getSubsetsOfWord(target)
         val connection: Connection = DriverManager.getConnection("jdbc:sqlite:words.db")
         connection.use { conn ->
             val query =
                 buildString {
                     append("SELECT word, ")
-                    append(targetNgram.joinToString(" + ") { "SUM(CASE WHEN word LIKE '%${it.second}%' THEN ${it.first} ELSE 0 END)" })
+                    append(targetNgram.joinToString(" + ") { "SUM(CASE WHEN word LIKE '%${it.second}%' THEN 1 ELSE 0 END)" })
                     append(" AS substring_count FROM words GROUP BY word ORDER BY substring_count DESC LIMIT 10;")
                 }
             val statement = conn.prepareStatement(query)
@@ -34,12 +34,12 @@ object JaccardResolver {
                 results.add(Pair(jaccardIndex, candidate))
             }
             results.sortByDescending { it.first }
-            return results.toTypedArray()
+            return results
         }
     }
 
-    fun findSimilar(target: String): Array<Pair<BigDecimal, String>> {
+    override fun findSimilar(word: String): List<Pair<BigDecimal, String>> {
         // Indexer.insertWord(target)
-        return countSubstringsInWords(target)
+        return countSubstringsInWords(word)
     }
 }

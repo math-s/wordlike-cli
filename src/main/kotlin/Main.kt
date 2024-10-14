@@ -9,6 +9,21 @@ import java.math.RoundingMode
 
 val logger = KotlinLogging.logger {}
 
+fun runResolver(
+    resolver: Resolver,
+    word: String,
+) {
+    val result =
+        buildString {
+            resolver.findSimilar(word).forEach {
+                append("${it.first.setScale(2, RoundingMode.UP)} ${it.second} \n")
+            }
+        }
+    logger.info { result }
+}
+
+fun runResoverPhrase()
+
 @OptIn(ExperimentalCli::class)
 fun main(args: Array<String>) {
     val parser = ArgParser("similarto")
@@ -18,15 +33,8 @@ fun main(args: Array<String>) {
             val phrase by argument(ArgType.String, description = "Target word to find similar words.")
 
             override fun execute() {
-                val result =
-                    buildString {
-                        phrase.split(" ").forEach { word ->
-                            JaccardResolver.findSimilar(word).forEach {
-                                append("${it.first.setScale(2, RoundingMode.UP)} ${it.second} \n")
-                            }
-                        }
-                    }
-                logger.info { result }
+                runResolver(JaccardResolver, phrase)
+                runResolver(LevenshteinResolver, phrase)
             }
         }
 
